@@ -195,5 +195,4 @@ with st.container(border=True):
     with st.expander("Ver detalles técnicos"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
-        st.write("---")
-        st.write(f"Consumo Total: **{total_consumption_kg_min:.3f} kg/min**")
+      
