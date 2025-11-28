@@ -193,7 +193,7 @@ with st.container(border=True):
         else:
             st.error(f"⛔ **NO DESCARGAR**: Faltan consumir **{(truck_capacity - space_for_truck):,.2f} kg**.")
 
-    with st.expander("Ver detalles técnicos"):
+    with st.expander("Valores GLP"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
       
