@@ -4,7 +4,6 @@ import streamlit as st
 st.set_page_config(page_title="Calculadora GLP", page_icon="🔥")
 
 # --- Estilos CSS personalizados ---
-# Definimos el CSS una sola vez para que los tanques se vean bien
 st.markdown("""
 <style>
     .tank-wrapper {
@@ -66,9 +65,9 @@ FORMATS_C2 = {"Jirafa": 100.7, "360g": 69.5}
 TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
 TRUCK_CAPACITY_KG = 24000
-SAFE_LIMIT_PERCENT = 85.0
+SAFE_LIMIT_PERCENT = 85
 
-# --- Función para dibujar el tanque (VERSIÓN CORREGIDA SIN ESPACIOS) ---
+# --- Función para dibujar el tanque ---
 def draw_tank(name, percent, min_percent):
     is_low = percent <= min_percent
     is_overfilled = percent > SAFE_LIMIT_PERCENT
@@ -85,7 +84,7 @@ def draw_tank(name, percent, min_percent):
     
     min_line = f'<div class="min-level-line" style="bottom: {min_percent}%;"></div>' if is_low else ''
 
-    # Construimos el HTML línea por línea para evitar errores de sangría
+    # Construcción HTML segura sin indentación para evitar errores
     html_content = (
         f'<div class="tank-wrapper">'
         f'  <div class="tank-container">'
@@ -104,13 +103,14 @@ def draw_tank(name, percent, min_percent):
 st.title("Calculadora de Disponibilidad de GLP")
 
 with st.container(border=True):
-    # Inputs
+    # Inputs (AHORA SON ENTEROS GRACIAS A value=INT y step=1)
     col1, col2 = st.columns(2)
     with col1:
-        tank1_percent = st.number_input("% Tanque Grande", value=75.0, min_value=0.0, max_value=100.0, step=0.1)
-        min_percent = st.number_input("% Mínimo Requerido", value=5.0, min_value=0.0, max_value=100.0, step=0.1)
+        # value=75 (int), step=1 -> Input de enteros
+        tank1_percent = st.number_input("% Tanque Grande", value=75, min_value=0, max_value=100, step=1)
+        min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
     with col2:
-        tank2_percent = st.number_input("% Tanque Chico", value=75.0, min_value=0.0, max_value=100.0, step=0.1)
+        tank2_percent = st.number_input("% Tanque Chico", value=75, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
 
     # Visualización
