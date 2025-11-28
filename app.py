@@ -198,13 +198,12 @@ with st.container(border=True):
                 wait_minutes = missing / total_consumption_kg_min
                 wait_h = int(wait_minutes // 60)
                 wait_m = int(wait_minutes % 60)
-                time_msg = f"⏳ Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
+                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
             else:
-                time_msg = "⏳ Tiempo estimado: **Infinito (No hay consumo activo)**"
+                time_msg = "Tiempo estimado: **Infinito (No hay consumo activo)**"
 
             st.error(f"⛔ **NO DESCARGAR**\n\nFaltan consumir **{missing:,.2f} kg**.\n\n{time_msg}")
 
     with st.expander("Valores GLP"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
-        st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
