@@ -65,7 +65,6 @@ FORMATS_C2 = {"Jirafa": 100.7, "360g": 69.5}
 TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
 SAFE_LIMIT_PERCENT = 85
-EFFICIENCY_C3 = 0.80  # Eficiencia del 80%
 
 # --- Función para dibujar el tanque ---
 def draw_tank(name, percent, min_percent):
@@ -109,8 +108,6 @@ with st.container(border=True):
     with col2:
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
-        # Aquí se calcula la velocidad con eficiencia
-        speed_efi = speed * EFFICIENCY_C3 
         
     # Visualización
     st.write("") 
@@ -128,6 +125,8 @@ with st.container(border=True):
     
     format_c3 = None
     format_c2 = None
+    eff_c3_input = 80 # Valor por defecto si no se muestra el input
+
     col_f1, col_f2 = st.columns(2)
 
     # Selectores dinámicos
@@ -135,6 +134,8 @@ with st.container(border=True):
         with col_f1:
             name_c3 = st.selectbox("Formato C3", list(FORMATS_C3.keys()), format_func=lambda x: f"{x} ({FORMATS_C3[x]} g)")
             format_c3 = FORMATS_C3[name_c3]
+            # NUEVO INPUT DE EFICIENCIA
+            eff_c3_input = st.number_input("Eficiencia C3 (%)", value=80, min_value=0, max_value=100, step=1)
             
     if line in ["C2", "C3 y C2"]:
         with col_f2:
@@ -153,8 +154,9 @@ with st.container(border=True):
     consumption_c2 = 0
 
     if line in ["C3", "C3 y C2"] and format_c3 is not None:
-        # Se usa speed_efi (80% de eficiencia) para calcular el consumo real
-        consumption_c3 = format_c3 * speed_efi / 1000 
+        # Cálculo usando la eficiencia seleccionada dinámicamente
+        speed_real_c3 = speed * (eff_c3_input / 100.0)
+        consumption_c3 = format_c3 * speed_real_c3 / 1000 
 
     if line in ["C2", "C3 y C2"] and format_c2 is not None:
         consumption_c2 = format_c2 * 52 / 1000
@@ -168,7 +170,8 @@ with st.container(border=True):
         mins_avail = 0
     
     # --- RESULTADO DE TIEMPO ---
-    st.markdown("### Tiempo de producción al 80% de eficiencia")
+    eff_text = f" (Eficiencia C3: {eff_c3_input}%)" if line in ["C3", "C3 y C2"] else ""
+    st.markdown(f"### Tiempo de producción restante{eff_text}")
     st.markdown(f"<h2 style='text-align:center; color:#2563eb;'>{int(mins_avail//60)}h {int(mins_avail%60)}min</h2>", unsafe_allow_html=True)
     
     # --- SECCIÓN DE CAMIÓN ---
@@ -196,12 +199,11 @@ with st.container(border=True):
             missing = truck_capacity - space_for_truck
             
             # --- CÁLCULO DE TIEMPO DE ESPERA ---
-            # Como total_consumption_kg_min usa speed_efi, este cálculo también considera la eficiencia.
             if total_consumption_kg_min > 0:
                 wait_minutes = missing / total_consumption_kg_min
                 wait_h = int(wait_minutes // 60)
                 wait_m = int(wait_minutes % 60)
-                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min** (al 80%)"
+                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
             else:
                 time_msg = "Tiempo estimado: **Infinito (No hay consumo activo)**"
 
@@ -210,4 +212,4 @@ with st.container(border=True):
     with st.expander("Valores GLP"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
-       # st.write(f"Consumo Total (al 80% ef.): **{total_consumption_kg_min:,.2f} kg/min**")
+        #st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
