@@ -64,7 +64,7 @@ FORMATS_C2 = {"Jirafa": 100.7, "360g": 69.5}
 
 TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
-TRUCK_CAPACITY_KG = 27000
+# TRUCK_CAPACITY_KG se ha eliminado como constante fija, ahora es variable
 SAFE_LIMIT_PERCENT = 85
 
 # --- Función para dibujar el tanque ---
@@ -84,7 +84,6 @@ def draw_tank(name, percent, min_percent):
     
     min_line = f'<div class="min-level-line" style="bottom: {min_percent}%;"></div>' if is_low else ''
 
-    # Construcción HTML segura sin indentación para evitar errores
     html_content = (
         f'<div class="tank-wrapper">'
         f'  <div class="tank-container">'
@@ -96,17 +95,15 @@ def draw_tank(name, percent, min_percent):
         f'  <div class="tank-value" style="color: inherit">{percent}% {alert_icon}</div>'
         f'</div>'
     )
-    
     st.markdown(html_content, unsafe_allow_html=True)
 
 # --- Interfaz de Usuario ---
 st.title("Calculadora de Disponibilidad de GLP")
 
 with st.container(border=True):
-    # Inputs (AHORA SON ENTEROS GRACIAS A value=INT y step=1)
+    # Inputs (Enteros)
     col1, col2 = st.columns(2)
     with col1:
-        # value=75 (int), step=1 -> Input de enteros
         tank1_percent = st.number_input("% Tanque Grande", value=75, min_value=0, max_value=100, step=1)
         min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
     with col2:
@@ -124,52 +121,79 @@ with st.container(border=True):
     st.caption(f"Línea punteada indica límite de seguridad {SAFE_LIMIT_PERCENT}%")
     st.divider()
 
-    # Selección
+    # Selección de Línea
     line = st.selectbox("Línea de consumo", ["C3", "C2", "C3 y C2"])
+    
     format_c3 = None
     format_c2 = None
     col_f1, col_f2 = st.columns(2)
 
+    # Selectores dinámicos
     if line in ["C3", "C3 y C2"]:
         with col_f1:
             name_c3 = st.selectbox("Formato C3", list(FORMATS_C3.keys()), format_func=lambda x: f"{x} ({FORMATS_C3[x]} g)")
             format_c3 = FORMATS_C3[name_c3]
+            
     if line in ["C2", "C3 y C2"]:
         with col_f2:
             name_c2 = st.selectbox("Formato C2", list(FORMATS_C2.keys()), format_func=lambda x: f"{x} ({FORMATS_C2[x]} g)")
             format_c2 = FORMATS_C2[name_c2]
 
-    # Cálculos
+    # --- CÁLCULOS ---
+    
+    # 1. Disponibilidad
     total_avail_kg = ((TANK1_CAPACITY * (tank1_percent/100)) + (TANK2_CAPACITY * (tank2_percent/100))) * 0.54
     min_req_kg = ((TANK1_CAPACITY + TANK2_CAPACITY) * (min_percent/100)) * 0.54
     usable_kg = total_avail_kg - min_req_kg
 
-    cons_min = 0
-    if line == "C3" and format_c3: cons_min = format_c3 * speed / 1000
-    elif line == "C2" and format_c2: cons_min = format_c2 * 52 / 1000
-    elif line == "C3 y C2" and format_c3 and format_c2: cons_min = (format_c3 * speed + format_c2 * 52) / 1000
+    # 2. Consumo
+    consumption_c3 = 0
+    consumption_c2 = 0
 
-    mins_avail = usable_kg / cons_min if (usable_kg > 0 and cons_min > 0) else 0
+    if line in ["C3", "C3 y C2"] and format_c3 is not None:
+        consumption_c3 = format_c3 * speed / 1000 
+
+    if line in ["C2", "C3 y C2"] and format_c2 is not None:
+        consumption_c2 = format_c2 * 52 / 1000
+
+    total_consumption_kg_min = consumption_c3 + consumption_c2
+
+    # 3. Tiempo Restante
+    if usable_kg > 0 and total_consumption_kg_min > 0:
+        mins_avail = usable_kg / total_consumption_kg_min
+    else:
+        mins_avail = 0
     
-    # Camión
-    total_phys_cap = (TANK1_CAPACITY + TANK2_CAPACITY) * 0.54
-    max_safe_cap = total_phys_cap * (SAFE_LIMIT_PERCENT / 100.0)
-    space_for_truck = max_safe_cap - total_avail_kg
-    can_offload = space_for_truck >= TRUCK_CAPACITY_KG
-
-    # Resultados
+    # --- RESULTADO DE TIEMPO ---
     st.markdown("### Tiempo restante")
     st.markdown(f"<h2 style='text-align:center; color:#2563eb;'>{int(mins_avail//60)}h {int(mins_avail%60)}min</h2>", unsafe_allow_html=True)
     
+    # --- SECCIÓN DE CAMIÓN ---
     st.markdown("### Estado de Descarga")
+    
+    # Selector de Camión
+    truck_capacity = st.selectbox(
+        "Seleccionar capacidad del camión:",
+        options=[24000, 27000],
+        format_func=lambda x: f"{x:,} kg"
+    )
+
+    # Lógica de Camión
+    total_phys_cap = (TANK1_CAPACITY + TANK2_CAPACITY) * 0.54
+    max_safe_cap = total_phys_cap * (SAFE_LIMIT_PERCENT / 100.0)
+    space_for_truck = max_safe_cap - total_avail_kg
+    can_offload = space_for_truck >= truck_capacity
+
     if can_offload:
-        st.success(f"✅ **SE PUEDE DESCARGAR**\n\nEl camión entra sin superar el {SAFE_LIMIT_PERCENT}%.\n(Espacio: {space_for_truck:,.2f} kg)")
+        st.success(f"✅ **SE PUEDE DESCARGAR**\n\nEl camión de {truck_capacity:,} kg entra sin superar el {SAFE_LIMIT_PERCENT}%.\n(Espacio: {space_for_truck:,.2f} kg)")
     else:
         if space_for_truck < 0:
             st.error(f"⛔ **SOBRELLENADO**: Se supera el {SAFE_LIMIT_PERCENT}%.")
         else:
-            st.error(f"⛔ **NO DESCARGAR**: Faltan consumir **{(TRUCK_CAPACITY_KG - space_for_truck):,.2f} kg**.")
+            st.error(f"⛔ **NO DESCARGAR**: Faltan consumir **{(truck_capacity - space_for_truck):,.2f} kg**.")
 
     with st.expander("Ver detalles técnicos"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
+        st.write("---")
+        st.write(f"Consumo Total: **{total_consumption_kg_min:.3f} kg/min**")
