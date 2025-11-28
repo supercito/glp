@@ -66,6 +66,7 @@ TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
 # TRUCK_CAPACITY_KG se ha eliminado como constante fija, ahora es variable
 SAFE_LIMIT_PERCENT = 85
+EFFICIENCY_C3 = 0.80
 
 # --- Función para dibujar el tanque ---
 def draw_tank(name, percent, min_percent):
@@ -109,7 +110,7 @@ with st.container(border=True):
     with col2:
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
-
+        speed_efi = speed * EFFICIENCY_C3
     # Visualización
     st.write("") 
     t_col1, t_col2 = st.columns([1, 1])
@@ -151,7 +152,7 @@ with st.container(border=True):
     consumption_c2 = 0
 
     if line in ["C3", "C3 y C2"] and format_c3 is not None:
-        consumption_c3 = format_c3 * speed / 1000 
+        consumption_c3 = format_c3 * speed_efi / 1000 
 
     if line in ["C2", "C3 y C2"] and format_c2 is not None:
         consumption_c2 = format_c2 * 52 / 1000
