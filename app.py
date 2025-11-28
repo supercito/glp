@@ -104,10 +104,10 @@ with st.container(border=True):
     # Inputs (Enteros)
     col1, col2 = st.columns(2)
     with col1:
-        tank1_percent = st.number_input("% Tanque Grande", value=75, min_value=0, max_value=100, step=1)
+        tank1_percent = st.number_input("% Tanque Grande", value=85, min_value=0, max_value=100, step=1)
         min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
     with col2:
-        tank2_percent = st.number_input("% Tanque Chico", value=75, min_value=0, max_value=100, step=1)
+        tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
 
     # Visualización
