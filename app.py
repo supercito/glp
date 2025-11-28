@@ -165,7 +165,7 @@ with st.container(border=True):
         mins_avail = 0
     
     # --- RESULTADO DE TIEMPO ---
-    st.markdown("### Tiempo restante")
+    st.markdown("### Tiempo de producción")
     st.markdown(f"<h2 style='text-align:center; color:#2563eb;'>{int(mins_avail//60)}h {int(mins_avail%60)}min</h2>", unsafe_allow_html=True)
     
     # --- SECCIÓN DE CAMIÓN ---
