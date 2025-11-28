@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- Configuración de la página ---
-st.set_page_config(page_title="Calculadora GLP", page_icon="🔥⛽")
+st.set_page_config(page_title="Calculadora GLP", page_icon="⛽")
 
 # --- Estilos CSS personalizados ---
 st.markdown("""
