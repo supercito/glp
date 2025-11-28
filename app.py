@@ -74,10 +74,10 @@ def draw_tank(name, percent, min_percent):
     
     if is_low:
         color = "#ef4444"
-        alert_icon = "⚠️ B"
+        alert_icon = "⚠️"
     elif is_overfilled:
         color = "#f97316"
-        alert_icon = "⚠️ A"
+        alert_icon = "⚠️"
     else:
         color = "#22c55e"
         alert_icon = ""
