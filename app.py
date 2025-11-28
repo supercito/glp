@@ -65,7 +65,7 @@ FORMATS_C2 = {"Jirafa": 100.7, "360g": 69.5}
 TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
 SAFE_LIMIT_PERCENT = 85
-EFFICIENCY_C3 = 0.80
+EFFICIENCY_C3 = 0.80  # Eficiencia del 80%
 
 # --- Función para dibujar el tanque ---
 def draw_tank(name, percent, min_percent):
@@ -109,7 +109,8 @@ with st.container(border=True):
     with col2:
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
-        speed_efi = speed * EFFICIENCY_C3
+        # Aquí se calcula la velocidad con eficiencia
+        speed_efi = speed * EFFICIENCY_C3 
         
     # Visualización
     st.write("") 
@@ -152,6 +153,7 @@ with st.container(border=True):
     consumption_c2 = 0
 
     if line in ["C3", "C3 y C2"] and format_c3 is not None:
+        # Se usa speed_efi (80% de eficiencia) para calcular el consumo real
         consumption_c3 = format_c3 * speed_efi / 1000 
 
     if line in ["C2", "C3 y C2"] and format_c2 is not None:
@@ -194,11 +196,12 @@ with st.container(border=True):
             missing = truck_capacity - space_for_truck
             
             # --- CÁLCULO DE TIEMPO DE ESPERA ---
+            # Como total_consumption_kg_min usa speed_efi, este cálculo también considera la eficiencia.
             if total_consumption_kg_min > 0:
                 wait_minutes = missing / total_consumption_kg_min
                 wait_h = int(wait_minutes // 60)
                 wait_m = int(wait_minutes % 60)
-                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
+                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min** (al 80%)"
             else:
                 time_msg = "Tiempo estimado: **Infinito (No hay consumo activo)**"
 
@@ -207,3 +210,4 @@ with st.container(border=True):
     with st.expander("Valores GLP"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
+       # st.write(f"Consumo Total (al 80% ef.): **{total_consumption_kg_min:,.2f} kg/min**")
