@@ -95,7 +95,7 @@ def draw_tank(name, percent, min_percent):
     min_line_html = f'<div class="min-level-line" style="bottom: {min_percent}%;"></div>' if is_low else ''
 
     # HTML sin identación al inicio para evitar errores de renderizado en Streamlit
-    html = f"""
+    html = f""
 <div class="tank-wrapper">
     <div class="tank-container">
         <div class="tank-level" style="height: {min(percent, 100)}%; background-color: {color};"></div>
@@ -107,7 +107,7 @@ def draw_tank(name, percent, min_percent):
         {percent}% {alert_icon}
     </div>
 </div>
-"""
+""
     st.markdown(html, unsafe_allow_html=True)
 
 # --- Interfaz de Usuario ---
