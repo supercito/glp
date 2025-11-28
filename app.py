@@ -98,7 +98,7 @@ def draw_tank(name, percent, min_percent):
     st.markdown(html_content, unsafe_allow_html=True)
 
 # --- Interfaz de Usuario ---
-st.title("Calculadora de Disponibilidad de GLP")
+#st.title("Calculadora de Disponibilidad de GLP")
 
 with st.container(border=True):
     # Inputs (Enteros)
