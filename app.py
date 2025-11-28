@@ -64,7 +64,6 @@ FORMATS_C2 = {"Jirafa": 100.7, "360g": 69.5}
 
 TANK1_CAPACITY = 49170
 TANK2_CAPACITY = 30694
-# TRUCK_CAPACITY_KG se ha eliminado como constante fija, ahora es variable
 SAFE_LIMIT_PERCENT = 85
 EFFICIENCY_C3 = 0.80
 
@@ -111,6 +110,7 @@ with st.container(border=True):
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
         speed_efi = speed * EFFICIENCY_C3
+        
     # Visualización
     st.write("") 
     t_col1, t_col2 = st.columns([1, 1])
@@ -186,14 +186,25 @@ with st.container(border=True):
     can_offload = space_for_truck >= truck_capacity
 
     if can_offload:
-        st.success(f"✅ **SE PUEDE DESCARGAR**\n\nEl camión de {truck_capacity:,} kg entra sin superar el {SAFE_LIMIT_PERCENT}%.\n(Espacio: {space_for_truck:,.2f} kg)")
+        st.success(f"✅ **SE PUEDE DESCARGAR**\n\nEl camión de {truck_capacity:,} kg entra sin superar el {SAFE_LIMIT_PERCENT}%.\n(Espacio disponible: {space_for_truck:,.2f} kg)")
     else:
         if space_for_truck < 0:
             st.error(f"⛔ **SOBRELLENADO**: Se supera el {SAFE_LIMIT_PERCENT}%.")
         else:
-            st.error(f"⛔ **NO DESCARGAR**: Faltan consumir **{(truck_capacity - space_for_truck):,.2f} kg**.")
+            missing = truck_capacity - space_for_truck
+            
+            # --- CÁLCULO DE TIEMPO DE ESPERA ---
+            if total_consumption_kg_min > 0:
+                wait_minutes = missing / total_consumption_kg_min
+                wait_h = int(wait_minutes // 60)
+                wait_m = int(wait_minutes % 60)
+                time_msg = f"⏳ Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
+            else:
+                time_msg = "⏳ Tiempo estimado: **Infinito (No hay consumo activo)**"
+
+            st.error(f"⛔ **NO DESCARGAR**\n\nFaltan consumir **{missing:,.2f} kg**.\n\n{time_msg}")
 
     with st.expander("Valores GLP"):
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
-      
+        st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
