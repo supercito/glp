@@ -72,7 +72,7 @@ FORMATS_C2 = {
 
 TANK1_CAPACITY = 49170  # Capacidad m3 Tanque Grande
 TANK2_CAPACITY = 30694  # Capacidad m3 Tanque Chico
-TRUCK_CAPACITY_KG = 24000 # Carga del camión
+TRUCK_CAPACITY_KG = 27500 # Carga del camión
 SAFE_LIMIT_PERCENT = 85.0 # Límite de seguridad
 
 # --- Función para dibujar el tanque ---
