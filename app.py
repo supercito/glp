@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- Configuración de la página ---
-st.set_page_config(page_title="Calculadora GLP", page_icon="⛽")
+st.set_page_config(page_title="Calculadora GLP", page_icon="🛢️")
 
 # --- Estilos CSS personalizados ---
 st.markdown("""
@@ -105,6 +105,9 @@ with st.container(border=True):
     with col1:
         tank1_percent = st.number_input("% Tanque Grande", value=85, min_value=0, max_value=100, step=1)
         min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
+        # NUEVO INPUT DE DENSIDAD
+        density = st.number_input("Densidad (según ficha)", value=0.567, min_value=0.500, max_value=0.600, step=0.001, format="%.3f")
+        
     with col2:
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
         speed = st.number_input("Velocidad C3 (env/min)", value=195, step=1)
@@ -125,7 +128,7 @@ with st.container(border=True):
     
     format_c3 = None
     format_c2 = None
-    eff_c3_input = 80 # Valor por defecto si no se muestra el input
+    eff_c3_input = 80 # default
 
     col_f1, col_f2 = st.columns(2)
 
@@ -134,7 +137,6 @@ with st.container(border=True):
         with col_f1:
             name_c3 = st.selectbox("Formato C3", list(FORMATS_C3.keys()), format_func=lambda x: f"{x} ({FORMATS_C3[x]} g)")
             format_c3 = FORMATS_C3[name_c3]
-            # NUEVO INPUT DE EFICIENCIA
             eff_c3_input = st.number_input("Eficiencia C3 (%)", value=80, min_value=0, max_value=100, step=1)
             
     if line in ["C2", "C3 y C2"]:
@@ -142,11 +144,11 @@ with st.container(border=True):
             name_c2 = st.selectbox("Formato C2", list(FORMATS_C2.keys()), format_func=lambda x: f"{x} ({FORMATS_C2[x]} g)")
             format_c2 = FORMATS_C2[name_c2]
 
-    # --- CÁLCULOS ---
+    # --- CÁLCULOS (Usando la densidad variable) ---
     
-    # 1. Disponibilidad
-    total_avail_kg = ((TANK1_CAPACITY * (tank1_percent/100)) + (TANK2_CAPACITY * (tank2_percent/100))) * 0.54
-    min_req_kg = ((TANK1_CAPACITY + TANK2_CAPACITY) * (min_percent/100)) * 0.54
+    # 1. Disponibilidad (Se multiplica por density en lugar de 0.54 fijo)
+    total_avail_kg = ((TANK1_CAPACITY * (tank1_percent/100)) + (TANK2_CAPACITY * (tank2_percent/100))) * density
+    min_req_kg = ((TANK1_CAPACITY + TANK2_CAPACITY) * (min_percent/100)) * density
     usable_kg = total_avail_kg - min_req_kg
 
     # 2. Consumo
@@ -154,7 +156,6 @@ with st.container(border=True):
     consumption_c2 = 0
 
     if line in ["C3", "C3 y C2"] and format_c3 is not None:
-        # Cálculo usando la eficiencia seleccionada dinámicamente
         speed_real_c3 = speed * (eff_c3_input / 100.0)
         consumption_c3 = format_c3 * speed_real_c3 / 1000 
 
@@ -184,8 +185,8 @@ with st.container(border=True):
         format_func=lambda x: f"{x:,} kg"
     )
 
-    # Lógica de Camión
-    total_phys_cap = (TANK1_CAPACITY + TANK2_CAPACITY) * 0.54
+    # Lógica de Camión (Usando density variable)
+    total_phys_cap = (TANK1_CAPACITY + TANK2_CAPACITY) * density
     max_safe_cap = total_phys_cap * (SAFE_LIMIT_PERCENT / 100.0)
     space_for_truck = max_safe_cap - total_avail_kg
     can_offload = space_for_truck >= truck_capacity
@@ -203,13 +204,14 @@ with st.container(border=True):
                 wait_minutes = missing / total_consumption_kg_min
                 wait_h = int(wait_minutes // 60)
                 wait_m = int(wait_minutes % 60)
-                time_msg = f"Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
+                time_msg = f"⏳ Tiempo estimado para descargar: **{wait_h}h {wait_m}min**"
             else:
-                time_msg = "Tiempo estimado: **Infinito (No hay consumo activo)**"
+                time_msg = "⏳ Tiempo estimado: **Infinito (No hay consumo activo)**"
 
             st.error(f"⛔ **NO DESCARGAR**\n\nFaltan consumir **{missing:,.2f} kg**.\n\n{time_msg}")
 
     with st.expander("Valores GLP"):
+        st.write(f"Densidad aplicada: **{density} kg/l**")
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
         #st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
