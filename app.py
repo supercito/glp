@@ -219,4 +219,4 @@ with st.container(border=True):
         st.write(f"Densidad aplicada: **{density} kg/l**")
         st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
         st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
-        st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
+        #st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
