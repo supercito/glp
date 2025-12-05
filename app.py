@@ -1,6 +1,6 @@
 import streamlit as st
 
-# --- Configuración de la página ---
+# --- Configuración de la página (Icono de Fuego) ---
 st.set_page_config(page_title="Calculadora GLP", page_icon="🔥")
 
 # --- Estilos CSS personalizados ---
@@ -105,7 +105,7 @@ with st.container(border=True):
     with col1:
         tank1_percent = st.number_input("% Tanque Grande", value=85, min_value=0, max_value=100, step=1)
         min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
-        # INPUT DE DENSIDAD
+        # INPUT DE DENSIDAD (Default 0.567)
         density = st.number_input("Densidad (según ficha)", value=0.567, min_value=0.500, max_value=0.600, step=0.001, format="%.3f")
         
     with col2:
@@ -135,4 +135,88 @@ with st.container(border=True):
     # Selectores dinámicos
     if line in ["C3", "C3 y C2"]:
         with col_f1:
-            na
+            name_c3 = st.selectbox("Formato C3", list(FORMATS_C3.keys()), format_func=lambda x: f"{x} ({FORMATS_C3[x]} g)")
+            format_c3 = FORMATS_C3[name_c3]
+            eff_c3_input = st.number_input("Eficiencia C3 (%)", value=80, min_value=0, max_value=100, step=1)
+            
+    if line in ["C2", "C3 y C2"]:
+        with col_f2:
+            name_c2 = st.selectbox("Formato C2", list(FORMATS_C2.keys()), format_func=lambda x: f"{x} ({FORMATS_C2[x]} g)")
+            format_c2 = FORMATS_C2[name_c2]
+
+    # --- CÁLCULOS ---
+    
+    # 1. Disponibilidad (Usa densidad variable)
+    total_avail_kg = ((TANK1_CAPACITY * (tank1_percent/100)) + (TANK2_CAPACITY * (tank2_percent/100))) * density
+    min_req_kg = ((TANK1_CAPACITY + TANK2_CAPACITY) * (min_percent/100)) * density
+    usable_kg = total_avail_kg - min_req_kg
+
+    # 2. Consumo
+    consumption_c3 = 0
+    consumption_c2 = 0
+
+    if line in ["C3", "C3 y C2"] and format_c3 is not None:
+        # Aplica eficiencia
+        speed_real_c3 = speed * (eff_c3_input / 100.0)
+        consumption_c3 = format_c3 * speed_real_c3 / 1000 
+
+    if line in ["C2", "C3 y C2"] and format_c2 is not None:
+        consumption_c2 = format_c2 * 52 / 1000
+
+    total_consumption_kg_min = consumption_c3 + consumption_c2
+
+    # 3. Tiempo Restante
+    if usable_kg > 0 and total_consumption_kg_min > 0:
+        mins_avail = usable_kg / total_consumption_kg_min
+    else:
+        mins_avail = 0
+    
+    # --- RESULTADO DE TIEMPO ---
+    eff_text = f" (Eficiencia C3: {eff_c3_input}%)" if line in ["C3", "C3 y C2"] else ""
+    st.markdown(f"### Tiempo de producción restante{eff_text}")
+    st.markdown(f"<h2 style='text-align:center; color:#2563eb;'>{int(mins_avail//60)}h {int(mins_avail%60)}min</h2>", unsafe_allow_html=True)
+    
+    # --- SECCIÓN DE CAMIÓN ---
+    st.markdown("### Estado de Descarga")
+    
+    # Selector de Camión
+    truck_capacity = st.selectbox(
+        "Seleccionar capacidad del camión:",
+        options=[24000, 27000],
+        format_func=lambda x: f"{x:,} kg"
+    )
+
+    # Lógica de Camión (Usa densidad variable)
+    total_phys_cap = (TANK1_CAPACITY + TANK2_CAPACITY) * density
+    max_safe_cap = total_phys_cap * (SAFE_LIMIT_PERCENT / 100.0)
+    space_for_truck = max_safe_cap - total_avail_kg
+    can_offload = space_for_truck >= truck_capacity
+
+    if can_offload:
+        st.success(f"✅ **SE PUEDE DESCARGAR**\n\nEl camión de {truck_capacity:,} kg entra sin superar el {SAFE_LIMIT_PERCENT}%.\n(Espacio disponible: {space_for_truck:,.2f} kg)")
+    else:
+        if space_for_truck < 0:
+            st.error(f"⛔ **SOBRELLENADO**: Se supera el {SAFE_LIMIT_PERCENT}%.")
+        else:
+            missing = truck_capacity - space_for_truck
+            
+            # --- CÁLCULO DE TIEMPO DE ESPERA Y TURNOS ---
+            if total_consumption_kg_min > 0:
+                wait_minutes = missing / total_consumption_kg_min
+                wait_h = int(wait_minutes // 60)
+                wait_m = int(wait_minutes % 60)
+                
+                # Turnos de 8 horas (480 min)
+                shifts = wait_minutes / 480
+                
+                time_msg = f"⏳ Tiempo estimado para descargar: **{wait_h}h {wait_m}min** ({shifts:.1f} turnos)"
+            else:
+                time_msg = "⏳ Tiempo estimado: **Infinito (No hay consumo activo)**"
+
+            st.error(f"⛔ **NO DESCARGAR**\n\nFaltan consumir **{missing:,.2f} kg**.\n\n{time_msg}")
+
+    with st.expander("Valores GLP"):
+        st.write(f"Densidad aplicada: **{density} kg/l**")
+        st.write(f"GLP actual: **{total_avail_kg:,.2f} kg**")
+        st.write(f"Capacidad 85%: **{max_safe_cap:,.2f} kg**")
+        st.write(f"Consumo Total: **{total_consumption_kg_min:,.2f} kg/min**")
