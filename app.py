@@ -106,7 +106,7 @@ with st.container(border=True):
         tank1_percent = st.number_input("% Tanque Grande", value=85, min_value=0, max_value=100, step=1)
         min_percent = st.number_input("% Mínimo Requerido", value=5, min_value=0, max_value=100, step=1)
         # NUEVO INPUT DE DENSIDAD
-        density = st.number_input("Densidad (según ficha tecnica)", value=0.567, min_value=0.500, max_value=0.600, step=0.001, format="%.3f")
+        density = st.number_input("Densidad (según ficha técnica)", value=0.567, min_value=0.500, max_value=0.600, step=0.001, format="%.3f")
         
     with col2:
         tank2_percent = st.number_input("% Tanque Chico", value=85, min_value=0, max_value=100, step=1)
